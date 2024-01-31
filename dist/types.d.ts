@@ -31,17 +31,15 @@ export type SingleBlockConfigWithoutVariants<TComponent = any, TProps = EmptyObj
     variants?: never;
 };
 export type VariantsRouter<TComponent = any, TBlockData extends Record<string, any> = Record<string, any>> = (block: BlockDataWithExtraContext<TComponent, TBlockData>) => string;
-export type SingleBlockConfigWithVariants<TComponent = any, TBlockData extends Record<string, any> = Record<string, any>> = {
+export type SingleBlockConfigWithVariants<TComponent = any, TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = {
     variantsRouter: VariantsRouter<TComponent, TBlockData>;
     variants: {
-        [key: string]: SingleBlockConfigWithoutVariants<TComponent, EmptyObjectOrRecord, TBlockData>;
+        [key: string]: SingleBlockConfigWithoutVariants<TComponent, TProps, TBlockData>;
     };
     dataRouter?: never;
     component?: never;
-    props?: never;
-    container?: never;
 };
-export type SingleBlockConfig<TComponent = any, TBlockData extends Record<string, any> = Record<string, any>> = SingleBlockConfigWithoutVariants<TComponent, EmptyObjectOrRecord, TBlockData> | SingleBlockConfigWithVariants<TComponent, TBlockData>;
+export type SingleBlockConfig<TComponent = any, TBlockData extends Record<string, any> = Record<string, any>> = SingleBlockConfigWithoutVariants<TComponent, EmptyObjectOrRecord, TBlockData> | SingleBlockConfigWithVariants<TComponent, EmptyObjectOrRecord, TBlockData>;
 export type BlocksConfig<TComponent = any, TBlockData extends Record<string, any> = Record<string, any>> = {
     [key: string]: SingleBlockConfig<TComponent, TBlockData>;
 };

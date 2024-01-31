@@ -88,13 +88,14 @@ export type VariantsRouter<
 
 export type SingleBlockConfigWithVariants<
   TComponent = any,
+  TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
   variantsRouter: VariantsRouter<TComponent, TBlockData>; // Replace unknown with the actual return type
   variants: {
     [key: string]: SingleBlockConfigWithoutVariants<
       TComponent,
-      EmptyObjectOrRecord,
+      TProps,
       TBlockData
     >; // Replace {} with the actual type for your variations
   };
@@ -102,8 +103,6 @@ export type SingleBlockConfigWithVariants<
   // Set the following to `never` as hacky way of ensuring they can't be used alongside variants:
   dataRouter?: never;
   component?: never;
-  props?: never;
-  container?: never;
 };
 
 export type SingleBlockConfig<
@@ -115,7 +114,7 @@ export type SingleBlockConfig<
       EmptyObjectOrRecord,
       TBlockData
     >
-  | SingleBlockConfigWithVariants<TComponent, TBlockData>;
+  | SingleBlockConfigWithVariants<TComponent, EmptyObjectOrRecord, TBlockData>;
 
 export type BlocksConfig<
   TComponent = any,

@@ -1,5 +1,5 @@
 {
-  "name": "render-blocks",
+  "name": "@kaelan/render-blocks",
   "version": "0.0.1",
   "description": "A framework-agnostic rendering engine for dynamic lists of blocks.",
   "main": "dist/index",
@@ -45,5 +45,8 @@
     "ts-essentials": "^9.4.1",
     "tsc-watch": "^5.0.3",
     "typescript": "^5.3.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
