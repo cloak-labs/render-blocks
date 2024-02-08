@@ -1,21 +1,17 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.deepMerge = exports.isObject = void 0;
 /**
  * Simple object check.
  * @param item
  * @returns {boolean}
  */
-function isObject(item) {
+export function isObject(item) {
     return item && typeof item === "object" && !Array.isArray(item);
 }
-exports.isObject = isObject;
 /**
  * Deep merge two objects.
  * @param target
  * @param ...sources
  */
-function deepMerge(base, ...sources) {
+export function deepMerge(base, ...sources) {
     let result = { ...base };
     for (const source of sources) {
         for (const key in source) {
@@ -35,4 +31,3 @@ function deepMerge(base, ...sources) {
     }
     return result;
 }
-exports.deepMerge = deepMerge;
