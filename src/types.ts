@@ -1,20 +1,22 @@
-import { BlockRenderer } from "./BlockRenderer";
+import { type BlockRenderer } from "./BlockRenderer";
+
+export type BlockRenderFunction<TComponent = any, TRenderOutput = any> = (
+  blockComponents: RenderPreparedBlock<TComponent>[],
+  options?: RenderOptions
+) => TRenderOutput;
 
 export type BlockRendererConfig<
   TComponent = any,
   TRenderOutput = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
-  render?: (
-    blockComponents: RenderPreparedBlock<TComponent>[],
-    options?: RenderOptions
-  ) => TRenderOutput;
+  render?: BlockRenderFunction<TComponent, TRenderOutput>;
   hooks?: {
     filters?: {
-      dataRouterResult: FilterHookFunction<
+      dataRouterResult?: FilterHookFunction<
         Record<string, any>,
         {
-          block: BlockDataWithExtraContext<TComponent, TBlockData>;
+          block: BlockDataWithExtraContext<TBlockData>;
         },
         Record<string, any>
       >;
@@ -25,6 +27,7 @@ export type BlockRendererConfig<
     | BlocksConfig<TComponent, TBlockData>
     | BlocksConfig<TComponent, TBlockData>[];
   blockIdField?: keyof TBlockData;
+  innerBlocksPropsKey?: string;
 };
 
 export type FilterHookFunction<TValue = any, TProps = any, TResult = any> = (
@@ -40,14 +43,20 @@ export type EmptyObjectOrRecord<T = Record<string, any>> = T extends Record<
   ? T
   : EmptyObject;
 
+export type TransformedBlock<
+  TBlockData extends Record<string, any> = Record<string, any>,
+  TProps = EmptyObjectOrRecord
+> = {
+  props?: TProps;
+  block: BlockDataWithExtraContext<TBlockData>;
+};
+
 export type RenderPreparedBlock<
   TComponent = any,
   TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>
-> = {
+> = TransformedBlock<TBlockData, TProps> & {
   Component: TComponent;
-  props: TProps;
-  block: BlockDataWithExtraContext<TComponent, TBlockData>;
 };
 
 export type DataRouter<
@@ -55,16 +64,15 @@ export type DataRouter<
   TBlockData extends Record<string, any> = Record<string, any>,
   TComponent = any
 > = (
-  block: BlockDataWithExtraContext<TComponent, TBlockData>,
+  block: BlockDataWithExtraContext<TBlockData>,
   blockRenderer?: BlockRenderer<TComponent, any, TBlockData>
-) => TProps;
+) => TProps | Promise<TProps>;
 
 export type GlobalDataRouter<
   TProps = EmptyObjectOrRecord,
-  TBlockData extends Record<string, any> = Record<string, any>,
-  TComponent = any
+  TBlockData extends Record<string, any> = Record<string, any>
 > = (options: {
-  block: BlockDataWithExtraContext<TComponent, TBlockData>;
+  block: BlockDataWithExtraContext<TBlockData>;
   props: TProps;
 }) => TProps;
 
@@ -82,16 +90,15 @@ export type SingleBlockConfigWithoutVariants<
 };
 
 export type VariantsRouter<
-  TComponent = any,
   TBlockData extends Record<string, any> = Record<string, any>
-> = (block: BlockDataWithExtraContext<TComponent, TBlockData>) => string;
+> = (block: BlockDataWithExtraContext<TBlockData>) => string;
 
 export type SingleBlockConfigWithVariants<
   TComponent = any,
   TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
-  variantsRouter: VariantsRouter<TComponent, TBlockData>; // Replace unknown with the actual return type
+  variantsRouter: VariantsRouter<TBlockData>; // Replace unknown with the actual return type
   variants: {
     [key: string]: SingleBlockConfigWithoutVariants<
       TComponent,
@@ -124,28 +131,25 @@ export type BlocksConfig<
 };
 
 export type BlockDataWithExtraContext<
-  TComponent = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = Partial<TBlockData> & {
-  context?: BlockContext<TComponent, Partial<TBlockData>>;
+  context?: BlockContext<Partial<TBlockData>>;
 };
 
 export type BlockContext<
-  TComponent = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
-  config?: SingleBlockConfig<TComponent, TBlockData>;
+  // config?: SingleBlockConfig<TComponent, TBlockData>;
   customProps?: Record<string, any>;
-  parent?: BlockDataWithExtraContext<TComponent, Partial<TBlockData>> | null;
+  parent?: BlockDataWithExtraContext<Partial<TBlockData>> | null;
   index?: number;
   prevSibling?: TBlockData | null;
   nextSibling?: TBlockData | null;
 };
 
 export type RenderOptions<
-  TComponent = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
-  parent?: BlockDataWithExtraContext<TComponent, Partial<TBlockData>>;
+  parent?: BlockDataWithExtraContext<Partial<TBlockData>>;
   customProps?: Record<string, any>;
 };
