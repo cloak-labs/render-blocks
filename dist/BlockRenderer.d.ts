@@ -4,8 +4,8 @@ export declare class BlockRenderer<TComponent = any, TRenderOutput = any, TBlock
     protected _config: BlockRendererConfig<TComponent, TRenderOutput, Partial<TBlockData>>;
     constructor(config: BlockRendererConfig<TComponent, TRenderOutput, Partial<TBlockData>>);
     mergeConfigWith(config: DeepPartial<BlockRendererConfig<TComponent, TRenderOutput, Partial<TBlockData>>>): BlockRenderer<TComponent, TRenderOutput, Partial<TBlockData>>;
-    getComponents(blocksData: Partial<TBlockData>[], options?: RenderOptions<TComponent, TBlockData>): RenderPreparedBlock<TComponent, EmptyObjectOrRecord, Partial<TBlockData>>[];
-    getComponent<TProps = EmptyObjectOrRecord>(block: BlockDataWithExtraContext<TComponent, Partial<TBlockData>>): RenderPreparedBlock<TComponent, TProps, Partial<TBlockData>>;
-    render(blockData: Partial<TBlockData>[], options?: RenderOptions<TComponent, TBlockData>): TRenderOutput;
+    getComponents(blocksData: Partial<TBlockData>[], options?: RenderOptions<TBlockData>): RenderPreparedBlock<TComponent, EmptyObjectOrRecord, Partial<TBlockData>>[];
+    getComponent<TProps = EmptyObjectOrRecord>(block: BlockDataWithExtraContext<Partial<TBlockData>>): RenderPreparedBlock<TComponent, TProps, Partial<TBlockData>>;
+    render(blockData: Partial<TBlockData>[], options?: RenderOptions<TBlockData>): TRenderOutput;
     getConfig(): BlockRendererConfig<TComponent, TRenderOutput, Partial<TBlockData>>;
 }

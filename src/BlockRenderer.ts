@@ -69,7 +69,7 @@ export class BlockRenderer<
 
   getComponents(
     blocksData: Partial<TBlockData>[],
-    options?: RenderOptions<TComponent, TBlockData>
+    options?: RenderOptions<TBlockData>
   ): RenderPreparedBlock<
     TComponent,
     EmptyObjectOrRecord,
@@ -86,8 +86,7 @@ export class BlockRenderer<
 
       if (!blockConfig) return;
 
-      const context: BlockContext<TComponent, Partial<TBlockData>> = {
-        config: blockConfig,
+      const context: BlockContext<Partial<TBlockData>> = {
         customProps,
         parent,
         index: i,
@@ -110,19 +109,16 @@ export class BlockRenderer<
   }
 
   getComponent<TProps = EmptyObjectOrRecord>(
-    block: BlockDataWithExtraContext<TComponent, Partial<TBlockData>>
+    block: BlockDataWithExtraContext<Partial<TBlockData>>
   ): RenderPreparedBlock<TComponent, TProps, Partial<TBlockData>> {
-    let { context: { config } = {} } = block;
     const blockId = block[this._config.blockIdField];
 
+    // config not directly provided, try getting it ourselves:
+    let config = this._config.blocks[blockId];
     if (!config) {
-      // config not directly provided, try getting it ourselves:
-      config = this._config.blocks[blockId];
-      if (!config) {
-        // no luck, log error to console and return early:
-        console.error(`Missing config for block "${blockId}", so we skip it.`);
-        return;
-      }
+      // no luck, log error to console and return early:
+      console.error(`Missing config for block "${blockId}", so we skip it.`);
+      return;
     }
 
     // if the block has variants, we need to determine which one to use:
@@ -169,7 +165,7 @@ export class BlockRenderer<
 
   render(
     blockData: Partial<TBlockData>[],
-    options?: RenderOptions<TComponent, TBlockData>
+    options?: RenderOptions<TBlockData>
   ) {
     const components = this.getComponents(blockData, options);
 

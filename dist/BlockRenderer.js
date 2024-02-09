@@ -48,7 +48,6 @@ class BlockRenderer {
             if (!blockConfig)
                 return;
             const context = {
-                config: blockConfig,
                 customProps,
                 parent,
                 index: i,
@@ -67,16 +66,13 @@ class BlockRenderer {
         return blocks;
     }
     getComponent(block) {
-        let { context: { config } = {} } = block;
         const blockId = block[this._config.blockIdField];
+        // config not directly provided, try getting it ourselves:
+        let config = this._config.blocks[blockId];
         if (!config) {
-            // config not directly provided, try getting it ourselves:
-            config = this._config.blocks[blockId];
-            if (!config) {
-                // no luck, log error to console and return early:
-                console.error(`Missing config for block "${blockId}", so we skip it.`);
-                return;
-            }
+            // no luck, log error to console and return early:
+            console.error(`Missing config for block "${blockId}", so we skip it.`);
+            return;
         }
         // if the block has variants, we need to determine which one to use:
         if (config.variantsRouter) {

@@ -14,7 +14,7 @@ export type BlockRendererConfig<
       dataRouterResult: FilterHookFunction<
         Record<string, any>,
         {
-          block: BlockDataWithExtraContext<TComponent, TBlockData>;
+          block: BlockDataWithExtraContext<TBlockData>;
         },
         Record<string, any>
       >;
@@ -47,7 +47,7 @@ export type RenderPreparedBlock<
 > = {
   Component: TComponent;
   props: TProps;
-  block: BlockDataWithExtraContext<TComponent, TBlockData>;
+  block: BlockDataWithExtraContext<TBlockData>;
 };
 
 export type DataRouter<
@@ -55,16 +55,15 @@ export type DataRouter<
   TBlockData extends Record<string, any> = Record<string, any>,
   TComponent = any
 > = (
-  block: BlockDataWithExtraContext<TComponent, TBlockData>,
+  block: BlockDataWithExtraContext<TBlockData>,
   blockRenderer?: BlockRenderer<TComponent, any, TBlockData>
 ) => TProps;
 
 export type GlobalDataRouter<
   TProps = EmptyObjectOrRecord,
-  TBlockData extends Record<string, any> = Record<string, any>,
-  TComponent = any
+  TBlockData extends Record<string, any> = Record<string, any>
 > = (options: {
-  block: BlockDataWithExtraContext<TComponent, TBlockData>;
+  block: BlockDataWithExtraContext<TBlockData>;
   props: TProps;
 }) => TProps;
 
@@ -82,16 +81,15 @@ export type SingleBlockConfigWithoutVariants<
 };
 
 export type VariantsRouter<
-  TComponent = any,
   TBlockData extends Record<string, any> = Record<string, any>
-> = (block: BlockDataWithExtraContext<TComponent, TBlockData>) => string;
+> = (block: BlockDataWithExtraContext<TBlockData>) => string;
 
 export type SingleBlockConfigWithVariants<
   TComponent = any,
   TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
-  variantsRouter: VariantsRouter<TComponent, TBlockData>; // Replace unknown with the actual return type
+  variantsRouter: VariantsRouter<TBlockData>; // Replace unknown with the actual return type
   variants: {
     [key: string]: SingleBlockConfigWithoutVariants<
       TComponent,
@@ -124,28 +122,24 @@ export type BlocksConfig<
 };
 
 export type BlockDataWithExtraContext<
-  TComponent = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = Partial<TBlockData> & {
-  context?: BlockContext<TComponent, Partial<TBlockData>>;
+  context?: BlockContext<Partial<TBlockData>>;
 };
 
 export type BlockContext<
-  TComponent = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
-  config?: SingleBlockConfig<TComponent, TBlockData>;
   customProps?: Record<string, any>;
-  parent?: BlockDataWithExtraContext<TComponent, Partial<TBlockData>> | null;
+  parent?: BlockDataWithExtraContext<Partial<TBlockData>> | null;
   index?: number;
   prevSibling?: TBlockData | null;
   nextSibling?: TBlockData | null;
 };
 
 export type RenderOptions<
-  TComponent = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
-  parent?: BlockDataWithExtraContext<TComponent, Partial<TBlockData>>;
+  parent?: BlockDataWithExtraContext<Partial<TBlockData>>;
   customProps?: Record<string, any>;
 };
