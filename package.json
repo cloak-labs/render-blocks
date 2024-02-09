@@ -1,6 +1,6 @@
 {
   "name": "@kaelan/render-blocks",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A framework-agnostic rendering engine for dynamic lists of blocks.",
   "main": "dist/index",
   "types": "dist/index.d.ts",
