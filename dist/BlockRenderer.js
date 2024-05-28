@@ -41,10 +41,10 @@ class BlockRenderer {
             return [];
         const { parent, customProps } = options ?? {};
         let blocks = [];
+        const config = this.getConfig();
         blocksData.forEach((blockData, i) => {
-            // if (i > 0) return; // TODO: remove this test line
-            const blockId = blockData[this._config.blockIdField];
-            const blockConfig = this._config.blocks[blockId];
+            const blockId = blockData[config.blockIdField];
+            const blockConfig = config.blocks[blockId];
             if (!blockConfig)
                 return;
             const context = {
