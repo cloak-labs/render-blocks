@@ -19,7 +19,7 @@ export type RenderPreparedBlock<TComponent = any, TProps = EmptyObjectOrRecord, 
     props: TProps;
     block: BlockDataWithExtraContext<TBlockData>;
 };
-export type DataRouter<TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>, TComponent = any> = (block: BlockDataWithExtraContext<TBlockData>, blockRenderer?: BlockRenderer<TComponent, any, TBlockData>) => TProps;
+export type DataRouter<TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>, TComponent = any, TBlockDataWithExtraContext = BlockDataWithExtraContext<TBlockData>> = (block: TBlockDataWithExtraContext extends BlockDataWithExtraContext<any> ? TBlockDataWithExtraContext : BlockDataWithExtraContext<TBlockData>, blockRenderer?: BlockRenderer<TComponent, any, TBlockData>) => TProps;
 export type GlobalDataRouter<TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = (options: {
     block: BlockDataWithExtraContext<TBlockData>;
     props: TProps;

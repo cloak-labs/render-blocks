@@ -53,9 +53,12 @@ export type RenderPreparedBlock<
 export type DataRouter<
   TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>,
-  TComponent = any
+  TComponent = any,
+  TBlockDataWithExtraContext = BlockDataWithExtraContext<TBlockData>
 > = (
-  block: BlockDataWithExtraContext<TBlockData>,
+  block: TBlockDataWithExtraContext extends BlockDataWithExtraContext<any>
+    ? TBlockDataWithExtraContext
+    : BlockDataWithExtraContext<TBlockData>,
   blockRenderer?: BlockRenderer<TComponent, any, TBlockData>
 ) => TProps;
 
