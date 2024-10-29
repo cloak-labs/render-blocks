@@ -1,20 +1,33 @@
 import { BlockRenderer } from "./BlockRenderer";
 
+// export type DataRouterResultFilter<TComponent, TRenderOutput, TBlockData> =
+//   FilterHookFunction<
+//     Record<string, any>,
+//     {
+//       block: BlockDataWithExtraContext<TBlockData>;
+//       blockRenderer: BlockRenderer<TComponent, TRenderOutput, TBlockData>;
+//     },
+//     Record<string, any>
+//   >;
+
 export type BlockRendererConfig<
-  TComponent = any,
+  TComponent extends (props: any) => any = (props: any) => any,
   TRenderOutput = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
   render?: (
     blockComponents: RenderPreparedBlock<TComponent>[],
-    options?: RenderOptions
+    options?: RenderOptions,
+    blockRenderer?: BlockRenderer<TComponent, TRenderOutput, TBlockData>
   ) => TRenderOutput;
   hooks?: {
     filters?: {
+      /** Allows you to filter the returned result of ALL data routers, so you can inject some global things, log stuff, or whatever you want. */
       dataRouterResult: FilterHookFunction<
         Record<string, any>,
         {
           block: BlockDataWithExtraContext<TBlockData>;
+          blockRenderer: BlockRenderer<TComponent, TRenderOutput, TBlockData>;
         },
         Record<string, any>
       >;
@@ -25,6 +38,7 @@ export type BlockRendererConfig<
     | BlocksConfig<TComponent, TBlockData>
     | BlocksConfig<TComponent, TBlockData>[];
   blockIdField?: keyof TBlockData;
+  providers?: ProviderConfig<TComponent, TBlockData>[];
 };
 
 export type FilterHookFunction<TValue = any, TProps = any, TResult = any> = (
@@ -41,7 +55,7 @@ export type EmptyObjectOrRecord<T = Record<string, any>> = T extends Record<
   : EmptyObject;
 
 export type RenderPreparedBlock<
-  TComponent = any,
+  TComponent extends (props: any) => any = (props: any) => any,
   TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
@@ -53,7 +67,7 @@ export type RenderPreparedBlock<
 export type DataRouter<
   TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>,
-  TComponent = any,
+  TComponent extends (props: any) => any = (props: any) => any,
   TBlockDataWithExtraContext = BlockDataWithExtraContext<TBlockData>
 > = (
   block: TBlockDataWithExtraContext extends BlockDataWithExtraContext<any>
@@ -71,7 +85,7 @@ export type GlobalDataRouter<
 }) => TProps;
 
 export type SingleBlockConfigWithoutVariants<
-  TComponent = any,
+  TComponent extends (props: any) => any = (props: any) => any,
   TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
@@ -88,7 +102,7 @@ export type VariantsRouter<
 > = (block: BlockDataWithExtraContext<TBlockData>) => string;
 
 export type SingleBlockConfigWithVariants<
-  TComponent = any,
+  TComponent extends (props: any) => any = (props: any) => any,
   TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
@@ -107,7 +121,7 @@ export type SingleBlockConfigWithVariants<
 };
 
 export type SingleBlockConfig<
-  TComponent = any,
+  TComponent extends (props: any) => any = (props: any) => any,
   TBlockData extends Record<string, any> = Record<string, any>
 > =
   | SingleBlockConfigWithoutVariants<
@@ -118,7 +132,7 @@ export type SingleBlockConfig<
   | SingleBlockConfigWithVariants<TComponent, EmptyObjectOrRecord, TBlockData>;
 
 export type BlocksConfig<
-  TComponent = any,
+  TComponent extends (props: any) => any = (props: any) => any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
   [key: string]: SingleBlockConfig<TComponent, TBlockData>;
@@ -145,4 +159,12 @@ export type RenderOptions<
 > = {
   parent?: BlockDataWithExtraContext<Partial<TBlockData>>;
   customProps?: Record<string, any>;
+};
+
+export type ProviderConfig<
+  TComponent extends (props: any) => any = (props: any) => any,
+  TBlockData extends Record<string, any> = Record<string, any>
+> = {
+  condition: (args: { blocks: TBlockData[] }) => boolean;
+  component: TComponent;
 };

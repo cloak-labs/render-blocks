@@ -7,11 +7,11 @@ import type {
   RenderOptions,
   FilterHookFunction,
 } from "./types";
-import { deepMerge } from "./utils/deepMerge";
+import { deepMerge } from "@kaelan/deep-merge-ts";
 import { DeepPartial } from "ts-essentials";
 
 export class BlockRenderer<
-  TComponent = any,
+  TComponent extends (props: any) => any = (props: any) => any,
   TRenderOutput = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > {
@@ -21,6 +21,10 @@ export class BlockRenderer<
     Partial<TBlockData>
   >;
 
+  /** This property holds the full array of blocks data that is currently being rendered. */
+  protected _blocksData: Partial<TBlockData>[] = [];
+  protected _meta: Record<string, any> = {};
+
   constructor(
     config: BlockRendererConfig<TComponent, TRenderOutput, Partial<TBlockData>>
   ) {
@@ -29,13 +33,12 @@ export class BlockRenderer<
     // if user provides an array of blockConfigs, we take care of deep merging them together before setting the final config:
     if (blocks && Array.isArray(blocks)) {
       const [target, ...sources] = blocks;
-      // @ts-ignore -- TODO: figure out deepMerge TS issue (not really a bug)
       blocks = deepMerge(target, ...sources);
     }
 
     /**
      * We provide a default function for every filter hook that simply returns the provided value.
-     * This allows us to wrap values with filters without worrying whether the filter hook is defined.
+     * This allows us to wrap values with filters without worrying about whether the filter hook is defined.
      */
     const defaultFilterHook: FilterHookFunction = (value) => value;
 
@@ -47,9 +50,9 @@ export class BlockRenderer<
           dataRouterResult: defaultFilterHook,
           ...config.hooks.filters,
         },
-        // TODO: set actions defaults:
-        // actions: {
-        //   ...config.hooks.actions,
+        // TODO: set events defaults:
+        // events: {
+        //   ...config.hooks.events,
         // },
       },
       blocks,
@@ -61,12 +64,19 @@ export class BlockRenderer<
       BlockRendererConfig<TComponent, TRenderOutput, Partial<TBlockData>>
     >
   ) {
-    const mergedConfig = deepMerge(this._config, config);
+    const mergedConfig = deepMerge<
+      BlockRendererConfig<TComponent, TRenderOutput, Partial<TBlockData>>,
+      DeepPartial<
+        BlockRendererConfig<TComponent, TRenderOutput, Partial<TBlockData>>
+      >[]
+    >(this._config, config);
+
     return new BlockRenderer<TComponent, TRenderOutput, Partial<TBlockData>>(
       mergedConfig
     );
   }
 
+  /** This method gets the raw block data array prepared/formatted for rendering. */
   getComponents(
     blocksData: Partial<TBlockData>[],
     options?: RenderOptions<TBlockData>
@@ -80,6 +90,7 @@ export class BlockRenderer<
 
     let blocks = [];
     const config = this.getConfig();
+
     blocksData.forEach((blockData, i) => {
       const blockId = blockData[config.blockIdField];
       const blockConfig = config.blocks[blockId];
@@ -108,12 +119,12 @@ export class BlockRenderer<
     return blocks;
   }
 
+  /** Given a formatted block data object, this method determines the correct component, runs the block's data router to get the props for that components, and returns both in the format that the `render` function expects.  */
   getComponent<TProps = EmptyObjectOrRecord>(
     block: BlockDataWithExtraContext<Partial<TBlockData>>
   ): RenderPreparedBlock<TComponent, TProps, Partial<TBlockData>> {
     const blockId = block[this._config.blockIdField];
 
-    // config not directly provided, try getting it ourselves:
     let config = this._config.blocks[blockId];
     if (!config) {
       // no luck, log error to console and return early:
@@ -144,17 +155,8 @@ export class BlockRenderer<
     // let dataRouterProps = config.dataRouter?.(block, this) ?? {};
     let dataRouterProps = filters.dataRouterResult(
       config.dataRouter?.(block, this) ?? {},
-      { block }
+      { block, blockRenderer: this }
     );
-
-    // TODO: remove globalDataRouter in favor of dataRouterResult filter hook:
-    // if (this._config.globalDataRouter) {
-    //   // call the global dataRouter to receive the final dataRouter props
-    //   dataRouterProps = this._config.globalDataRouter?.({
-    //     block,
-    //     props: dataRouterProps,
-    //   });
-    // }
 
     return {
       Component: config.component,
@@ -164,17 +166,37 @@ export class BlockRenderer<
   }
 
   render(
-    blockData: Partial<TBlockData>[],
+    blocksData: Partial<TBlockData>[],
     options?: RenderOptions<TBlockData>
   ) {
-    const components = this.getComponents(blockData, options);
+    if (!options?.parent) this._blocksData = blocksData;
+    const components = this.getComponents(blocksData, options);
 
     if (!this._config.render)
       throw Error(
         `You need to specify your own "render" function in your BlockRenderer config before you can use BlockRenderer.render(...)`
       );
 
-    return this._config.render(components, options);
+    let renderedContent = this._config.render(components, options, this);
+
+    // Apply providers if they exist, their conditions are met, and we're rendering blocks at the root level (not nested/inner blocks)
+    if (!options?.parent && this._config.providers) {
+      renderedContent = this.applyProviders(renderedContent, blocksData);
+    }
+
+    return renderedContent;
+  }
+
+  private applyProviders(
+    content: TRenderOutput,
+    blocksData: Partial<TBlockData>[]
+  ) {
+    return this._config.providers.reduceRight((acc, provider) => {
+      if (provider.condition({ blocks: blocksData })) {
+        return provider.component({ children: acc });
+      }
+      return acc;
+    }, content);
   }
 
   getConfig(): BlockRendererConfig<
@@ -183,5 +205,21 @@ export class BlockRenderer<
     Partial<TBlockData>
   > {
     return this._config;
+  }
+
+  /** Get the full array of blocks data that is currently being rendered. */
+  getBlocksData(): Partial<TBlockData>[] {
+    return this._blocksData;
+  }
+
+  /** Get the user-defined meta that you've attached to this BlockRenderer instance. */
+  getMeta(key?: string): (null | any) | Record<string, any> {
+    if (key) return this._meta[key] ?? null;
+    return this._meta;
+  }
+
+  /** Attach some user-defined meta to this BlockRenderer instance. */
+  setMeta(meta: Record<string, any>) {
+    this._meta = deepMerge(this._meta, meta);
   }
 }

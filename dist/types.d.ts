@@ -1,37 +1,40 @@
 import { BlockRenderer } from "./BlockRenderer";
-export type BlockRendererConfig<TComponent = any, TRenderOutput = any, TBlockData extends Record<string, any> = Record<string, any>> = {
-    render?: (blockComponents: RenderPreparedBlock<TComponent>[], options?: RenderOptions) => TRenderOutput;
+export type BlockRendererConfig<TComponent extends (props: any) => any = (props: any) => any, TRenderOutput = any, TBlockData extends Record<string, any> = Record<string, any>> = {
+    render?: (blockComponents: RenderPreparedBlock<TComponent>[], options?: RenderOptions, blockRenderer?: BlockRenderer<TComponent, TRenderOutput, TBlockData>) => TRenderOutput;
     hooks?: {
         filters?: {
+            /** Allows you to filter the returned result of ALL data routers, so you can inject some global things, log stuff, or whatever you want. */
             dataRouterResult: FilterHookFunction<Record<string, any>, {
                 block: BlockDataWithExtraContext<TBlockData>;
+                blockRenderer: BlockRenderer<TComponent, TRenderOutput, TBlockData>;
             }, Record<string, any>>;
         };
     };
     blocks?: BlocksConfig<TComponent, TBlockData> | BlocksConfig<TComponent, TBlockData>[];
     blockIdField?: keyof TBlockData;
+    providers?: ProviderConfig<TComponent, TBlockData>[];
 };
 export type FilterHookFunction<TValue = any, TProps = any, TResult = any> = (valueToFilter: TValue, props?: TProps) => TResult;
 export type EmptyObject = {};
 export type EmptyObjectOrRecord<T = Record<string, any>> = T extends Record<string, any> ? T : EmptyObject;
-export type RenderPreparedBlock<TComponent = any, TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = {
+export type RenderPreparedBlock<TComponent extends (props: any) => any = (props: any) => any, TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = {
     Component: TComponent;
     props: TProps;
     block: BlockDataWithExtraContext<TBlockData>;
 };
-export type DataRouter<TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>, TComponent = any, TBlockDataWithExtraContext = BlockDataWithExtraContext<TBlockData>> = (block: TBlockDataWithExtraContext extends BlockDataWithExtraContext<any> ? TBlockDataWithExtraContext : BlockDataWithExtraContext<TBlockData>, blockRenderer?: BlockRenderer<TComponent, any, TBlockData>) => TProps;
+export type DataRouter<TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>, TComponent extends (props: any) => any = (props: any) => any, TBlockDataWithExtraContext = BlockDataWithExtraContext<TBlockData>> = (block: TBlockDataWithExtraContext extends BlockDataWithExtraContext<any> ? TBlockDataWithExtraContext : BlockDataWithExtraContext<TBlockData>, blockRenderer?: BlockRenderer<TComponent, any, TBlockData>) => TProps;
 export type GlobalDataRouter<TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = (options: {
     block: BlockDataWithExtraContext<TBlockData>;
     props: TProps;
 }) => TProps;
-export type SingleBlockConfigWithoutVariants<TComponent = any, TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = {
+export type SingleBlockConfigWithoutVariants<TComponent extends (props: any) => any = (props: any) => any, TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = {
     dataRouter?: DataRouter<TProps, TBlockData, TComponent>;
     component?: TComponent;
     variantsRouter?: never;
     variants?: never;
 };
 export type VariantsRouter<TBlockData extends Record<string, any> = Record<string, any>> = (block: BlockDataWithExtraContext<TBlockData>) => string;
-export type SingleBlockConfigWithVariants<TComponent = any, TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = {
+export type SingleBlockConfigWithVariants<TComponent extends (props: any) => any = (props: any) => any, TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = {
     variantsRouter: VariantsRouter<TBlockData>;
     variants: {
         [key: string]: SingleBlockConfigWithoutVariants<TComponent, TProps, TBlockData>;
@@ -39,8 +42,8 @@ export type SingleBlockConfigWithVariants<TComponent = any, TProps = EmptyObject
     dataRouter?: never;
     component?: never;
 };
-export type SingleBlockConfig<TComponent = any, TBlockData extends Record<string, any> = Record<string, any>> = SingleBlockConfigWithoutVariants<TComponent, EmptyObjectOrRecord, TBlockData> | SingleBlockConfigWithVariants<TComponent, EmptyObjectOrRecord, TBlockData>;
-export type BlocksConfig<TComponent = any, TBlockData extends Record<string, any> = Record<string, any>> = {
+export type SingleBlockConfig<TComponent extends (props: any) => any = (props: any) => any, TBlockData extends Record<string, any> = Record<string, any>> = SingleBlockConfigWithoutVariants<TComponent, EmptyObjectOrRecord, TBlockData> | SingleBlockConfigWithVariants<TComponent, EmptyObjectOrRecord, TBlockData>;
+export type BlocksConfig<TComponent extends (props: any) => any = (props: any) => any, TBlockData extends Record<string, any> = Record<string, any>> = {
     [key: string]: SingleBlockConfig<TComponent, TBlockData>;
 };
 export type BlockDataWithExtraContext<TBlockData extends Record<string, any> = Record<string, any>> = Partial<TBlockData> & {
@@ -56,4 +59,10 @@ export type BlockContext<TBlockData extends Record<string, any> = Record<string,
 export type RenderOptions<TBlockData extends Record<string, any> = Record<string, any>> = {
     parent?: BlockDataWithExtraContext<Partial<TBlockData>>;
     customProps?: Record<string, any>;
+};
+export type ProviderConfig<TComponent extends (props: any) => any = (props: any) => any, TBlockData extends Record<string, any> = Record<string, any>> = {
+    condition: (args: {
+        blocks: TBlockData[];
+    }) => boolean;
+    component: TComponent;
 };
