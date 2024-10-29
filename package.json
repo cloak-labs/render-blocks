@@ -2,46 +2,38 @@
   "name": "@kaelan/render-blocks",
   "version": "0.1.0",
   "description": "A framework-agnostic rendering engine for dynamic lists of blocks.",
+  "type": "module",
   "main": "dist/index",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "require": "./dist/index.js",
-      "import": "./dist/index.d.ts"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
-    "dev": "tsc -p tsconfig.json -w",
+    "dev": "tsc -p tsconfig.json -w --preserveWatchOutput",
     "build": "npm run build-ts",
-    "build-ts": "tsc-silent -p tsconfig.json --suppress",
-    "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist",
-    "zzz-postpublish": "git push && git push --tags"
+    "build-ts": "tsc-silent -p tsconfig.json --suppress @",
+    "clean": "rm -rf .turbo && rm -rf dist && npm run clean:modules",
+    "clean:modules": "rm -rf node_modules"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cloak-labs/render-blocks.git"
   },
-  "keywords": [
-    "wordpress",
-    "wp",
-    "cloakwp",
-    "cloak",
-    "headless",
-    "decoupled",
-    "react",
-    "gutenberg",
-    "blocks"
-  ],
   "author": "Kaelan Smith",
   "license": "LGPL-3.0-only",
   "bugs": {
     "url": "https://github.com/cloak-labs/render-blocks/issues"
   },
   "homepage": "https://github.com/cloak-labs/render-blocks#readme",
+  "dependencies": {
+    "@kaelan/deep-merge-ts": "^0.0.1"
+  },
   "devDependencies": {
     "@types/node": "^18.18.1",
-    "@types/react": "18.2.37",
-    "@types/react-dom": "^18.2.8",
     "ts-essentials": "^9.4.1",
     "tsc-watch": "^5.0.3",
     "typescript": "^5.3.2"

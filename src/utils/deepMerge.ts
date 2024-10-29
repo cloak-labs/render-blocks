@@ -1,44 +1,42 @@
-import { DeepPartial } from "ts-essentials";
+// TODO: DELETE FILE
+// import { DeepPartial } from "ts-essentials";
 
-/**
- * Simple object check.
- * @param item
- * @returns {boolean}
- */
-export function isObject(item) {
-  return item && typeof item === "object" && !Array.isArray(item);
-}
+// /**
+//  * Simple object check.
+//  * @param item - The item to check
+//  * @returns {boolean} True if the item is a non-null object (excluding arrays)
+//  */
+// export function isObject(item: unknown): item is Record<string, unknown> {
+//   return item && typeof item === "object" && !Array.isArray(item);
+// }
 
-/**
- * Deep merge two objects.
- * @param target
- * @param ...sources
- */
-export function deepMerge<T extends Record<string, any>>(
-  base: T,
-  ...sources: DeepPartial<T>[]
-): T {
-  let result = { ...base };
+// /**
+//  * Deep merge two or more objects.
+//  * @param base - The base object to merge into
+//  * @param sources - One or more objects to merge from
+//  * @returns {T} The merged object
+//  */
+// export function deepMerge<T extends Record<string, unknown>>(
+//   base: T,
+//   ...sources: DeepPartial<T>[]
+// ): T {
+//   let result = { ...base };
 
-  for (const source of sources) {
-    for (const key in source) {
-      if (source.hasOwnProperty(key)) {
-        const sourceValue = source[key];
-        const resultValue = result[key];
+//   for (const source of sources) {
+//     for (const key in source) {
+//       const sourceValue = source[key];
+//       const resultValue = result[key];
 
-        if (isObject(resultValue) && isObject(sourceValue)) {
-          // If both the result and source values are objects, merge them recursively
-          result[key] = deepMerge(
-            { ...resultValue },
-            sourceValue as DeepPartial<typeof resultValue>
-          );
-        } else {
-          // Otherwise, directly assign the source value (including cases where it's undefined)
-          result[key] = sourceValue as T[Extract<keyof DeepPartial<T>, string>];
-        }
-      }
-    }
-  }
+//       if (isObject(resultValue) && isObject(sourceValue)) {
+//         result[key] = deepMerge(
+//           { ...resultValue },
+//           sourceValue as DeepPartial<typeof resultValue>
+//         );
+//       } else {
+//         result[key] = sourceValue as T[Extract<keyof DeepPartial<T>, string>];
+//       }
+//     }
+//   }
 
-  return result as T;
-}
+//   return result as T;
+// }
