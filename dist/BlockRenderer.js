@@ -4,32 +4,36 @@ export class BlockRenderer {
         /** This property holds the full array of blocks data that is currently being rendered. */
         this._blocksData = [];
         this._meta = {};
-        let { blocks } = config;
+        let { blocks, plugins = [], __executionCounts = new Map(), __processedBlocks = new Set(), } = config;
         // if user provides an array of blockConfigs, we take care of deep merging them together before setting the final config:
         if (blocks && Array.isArray(blocks)) {
             const [target, ...sources] = blocks;
             blocks = deepMerge(target, ...sources);
         }
-        /**
-         * We provide a default function for every filter hook that simply returns the provided value.
-         * This allows us to wrap values with filters without worrying about whether the filter hook is defined.
-         */
-        const defaultFilterHook = (value) => value;
-        this._config = {
+        // Start with base config
+        let finalConfig = {
+            combineBlocks: (renderedBlocks) => renderedBlocks,
             ...config,
             hooks: {
                 filters: {
-                    // Set filter defaults
-                    dataRouterResult: defaultFilterHook,
-                    ...config.hooks.filters,
+                    dataRouterResult: (value) => value,
+                    ...config.hooks?.filters,
                 },
-                // TODO: set events defaults:
-                // events: {
-                //   ...config.hooks.events,
-                // },
             },
             blocks,
         };
+        // Apply plugins with execution context
+        finalConfig = plugins.reduce((currentConfig, plugin) => {
+            const executionCount = (__executionCounts.get(plugin) || 0) + 1;
+            __executionCounts.set(plugin, executionCount);
+            return plugin(currentConfig, {
+                executionCount,
+                processedBlocks: __processedBlocks,
+            });
+        }, finalConfig);
+        finalConfig.__executionCounts = __executionCounts;
+        finalConfig.__processedBlocks = __processedBlocks;
+        this._config = finalConfig;
     }
     mergeConfigWith(config) {
         const mergedConfig = deepMerge(this._config, config);
@@ -58,6 +62,7 @@ export class BlockRenderer {
             const preparedBlock = this.getComponent({
                 ...blockData,
                 context,
+                meta: blockConfig.meta,
             });
             if (!preparedBlock)
                 return;
@@ -89,7 +94,6 @@ export class BlockRenderer {
         }
         const { filters } = this._config.hooks;
         // call the block's dataRouter to receive its props
-        // let dataRouterProps = config.dataRouter?.(block, this) ?? {};
         let dataRouterProps = filters.dataRouterResult(config.dataRouter?.(block, this) ?? {}, { block, blockRenderer: this });
         return {
             Component: config.component,
@@ -101,17 +105,24 @@ export class BlockRenderer {
         if (!options?.parent)
             this._blocksData = blocksData;
         const components = this.getComponents(blocksData, options);
-        if (!this._config.render)
-            throw Error(`You need to specify your own "render" function in your BlockRenderer config before you can use BlockRenderer.render(...)`);
-        let renderedContent = this._config.render(components, options, this);
+        if (!this._config.renderBlock) {
+            throw Error(`You need to specify a "renderBlock" function in your BlockRenderer config before you can use BlockRenderer.render(...)`);
+        }
+        if (!this._config.combineBlocks) {
+            throw Error(`You need to specify a "combineBlocks" function in your BlockRenderer config before you can use BlockRenderer.render(...)`);
+        }
+        // Render individual blocks
+        const renderedBlocks = components.map((component) => this._config.renderBlock(component, options, this));
+        // Combine blocks (allowing for grouping/wrapping)
+        let rendered = this._config.combineBlocks(renderedBlocks, components, options, this);
         // Apply providers if they exist, their conditions are met, and we're rendering blocks at the root level (not nested/inner blocks)
         if (!options?.parent && this._config.providers) {
-            renderedContent = this.applyProviders(renderedContent, blocksData);
+            rendered = this.applyProviders(rendered, blocksData);
         }
-        return renderedContent;
+        return rendered;
     }
     applyProviders(content, blocksData) {
-        return this._config.providers.reduceRight((acc, provider) => {
+        return Object.values(this._config.providers).reduceRight((acc, provider) => {
             if (provider.condition({ blocks: blocksData })) {
                 return provider.component({ children: acc });
             }

@@ -11,7 +11,7 @@ export declare class BlockRenderer<TComponent extends (props: any) => any = (pro
     getComponents(blocksData: Partial<TBlockData>[], options?: RenderOptions<TBlockData>): RenderPreparedBlock<TComponent, EmptyObjectOrRecord, Partial<TBlockData>>[];
     /** Given a formatted block data object, this method determines the correct component, runs the block's data router to get the props for that components, and returns both in the format that the `render` function expects.  */
     getComponent<TProps = EmptyObjectOrRecord>(block: BlockDataWithExtraContext<Partial<TBlockData>>): RenderPreparedBlock<TComponent, TProps, Partial<TBlockData>>;
-    render(blocksData: Partial<TBlockData>[], options?: RenderOptions<TBlockData>): TRenderOutput;
+    render(blocksData: Partial<TBlockData>[], options?: RenderOptions<TBlockData>): TRenderOutput | TRenderOutput[];
     private applyProviders;
     getConfig(): BlockRendererConfig<TComponent, TRenderOutput, Partial<TBlockData>>;
     /** Get the full array of blocks data that is currently being rendered. */

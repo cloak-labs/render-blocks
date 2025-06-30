@@ -1,6 +1,7 @@
 import { BlockRenderer } from "./BlockRenderer";
 export type BlockRendererConfig<TComponent extends (props: any) => any = (props: any) => any, TRenderOutput = any, TBlockData extends Record<string, any> = Record<string, any>> = {
-    render?: (blockComponents: RenderPreparedBlock<TComponent>[], options?: RenderOptions, blockRenderer?: BlockRenderer<TComponent, TRenderOutput, TBlockData>) => TRenderOutput;
+    renderBlock: (component: RenderPreparedBlock<TComponent>, options?: RenderOptions, blockRenderer?: BlockRenderer<TComponent, TRenderOutput, TBlockData>) => TRenderOutput;
+    combineBlocks?: (renderedBlocks: TRenderOutput[], components: RenderPreparedBlock<TComponent>[], options?: RenderOptions, blockRenderer?: BlockRenderer<TComponent, TRenderOutput, TBlockData>) => TRenderOutput | TRenderOutput[];
     hooks?: {
         filters?: {
             /** Allows you to filter the returned result of ALL data routers, so you can inject some global things, log stuff, or whatever you want. */
@@ -12,7 +13,10 @@ export type BlockRendererConfig<TComponent extends (props: any) => any = (props:
     };
     blocks?: BlocksConfig<TComponent, TBlockData> | BlocksConfig<TComponent, TBlockData>[];
     blockIdField?: keyof TBlockData;
-    providers?: ProviderConfig<TComponent, TBlockData>[];
+    providers?: Record<string, ProviderConfig<TComponent, TBlockData>>;
+    plugins?: BlockRendererPlugin<TComponent, TRenderOutput, TBlockData>[];
+    __executionCounts?: Map<BlockRendererPlugin<TComponent, TRenderOutput, TBlockData>, number>;
+    __processedBlocks?: Set<string>;
 };
 export type FilterHookFunction<TValue = any, TProps = any, TResult = any> = (valueToFilter: TValue, props?: TProps) => TResult;
 export type EmptyObject = {};
@@ -30,6 +34,7 @@ export type GlobalDataRouter<TProps = EmptyObjectOrRecord, TBlockData extends Re
 export type SingleBlockConfigWithoutVariants<TComponent extends (props: any) => any = (props: any) => any, TProps = EmptyObjectOrRecord, TBlockData extends Record<string, any> = Record<string, any>> = {
     dataRouter?: DataRouter<TProps, TBlockData, TComponent>;
     component?: TComponent;
+    meta?: Record<string, any>;
     variantsRouter?: never;
     variants?: never;
 };
@@ -39,6 +44,7 @@ export type SingleBlockConfigWithVariants<TComponent extends (props: any) => any
     variants: {
         [key: string]: SingleBlockConfigWithoutVariants<TComponent, TProps, TBlockData>;
     };
+    meta?: Record<string, any>;
     dataRouter?: never;
     component?: never;
 };
@@ -48,6 +54,7 @@ export type BlocksConfig<TComponent extends (props: any) => any = (props: any) =
 };
 export type BlockDataWithExtraContext<TBlockData extends Record<string, any> = Record<string, any>> = Partial<TBlockData> & {
     context?: BlockContext<Partial<TBlockData>>;
+    meta?: Record<string, any>;
 };
 export type BlockContext<TBlockData extends Record<string, any> = Record<string, any>> = {
     customProps?: Record<string, any>;
@@ -66,3 +73,7 @@ export type ProviderConfig<TComponent extends (props: any) => any = (props: any)
     }) => boolean;
     component: TComponent;
 };
+export type BlockRendererPlugin<TComponent extends (props: any) => any = (props: any) => any, TRenderOutput = any, TBlockData extends Record<string, any> = Record<string, any>> = (config: BlockRendererConfig<TComponent, TRenderOutput, TBlockData>, context: {
+    executionCount: number;
+    processedBlocks: Set<string>;
+}) => BlockRendererConfig<TComponent, TRenderOutput, TBlockData>;

@@ -15,11 +15,22 @@ export type BlockRendererConfig<
   TRenderOutput = any,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
-  render?: (
-    blockComponents: RenderPreparedBlock<TComponent>[],
+  // render?: (
+  //   blockComponents: RenderPreparedBlock<TComponent>[],
+  //   options?: RenderOptions,
+  //   blockRenderer?: BlockRenderer<TComponent, TRenderOutput, TBlockData>
+  // ) => TRenderOutput;
+  renderBlock: (
+    component: RenderPreparedBlock<TComponent>,
     options?: RenderOptions,
     blockRenderer?: BlockRenderer<TComponent, TRenderOutput, TBlockData>
   ) => TRenderOutput;
+  combineBlocks?: (
+    renderedBlocks: TRenderOutput[],
+    components: RenderPreparedBlock<TComponent>[],
+    options?: RenderOptions,
+    blockRenderer?: BlockRenderer<TComponent, TRenderOutput, TBlockData>
+  ) => TRenderOutput | TRenderOutput[];
   hooks?: {
     filters?: {
       /** Allows you to filter the returned result of ALL data routers, so you can inject some global things, log stuff, or whatever you want. */
@@ -32,13 +43,23 @@ export type BlockRendererConfig<
         Record<string, any>
       >;
     };
-    // actions?: {}; // TODO: sprinkle action hooks throughout block rendering lifecycle
   };
   blocks?:
     | BlocksConfig<TComponent, TBlockData>
     | BlocksConfig<TComponent, TBlockData>[];
+  /* The field in the block data that contains the block name/identifier corresponding to your block config. */
   blockIdField?: keyof TBlockData;
-  providers?: ProviderConfig<TComponent, TBlockData>[];
+  /* Providers enable you to conditionally wrap all rendered blocks in provider/context/wrapper components.  */
+  providers?: Record<string, ProviderConfig<TComponent, TBlockData>>;
+  /* Plugins implement the decorator pattern, so they can modify the block renderer config before it's used. They get applied in sequence, running the config through a transformation pipeline. */
+  plugins?: BlockRendererPlugin<TComponent, TRenderOutput, TBlockData>[];
+  /* Used to track the number of times each plugin has been executed, enabling plugins to adjust their behavior for initial vs subsequent executions. */
+  __executionCounts?: Map<
+    BlockRendererPlugin<TComponent, TRenderOutput, TBlockData>,
+    number
+  >;
+  /* Used to track the blocks that have been processed by plugins, enabling plugins to skip unnecessary processing for subsequent executions. */
+  __processedBlocks?: Set<string>;
 };
 
 export type FilterHookFunction<TValue = any, TProps = any, TResult = any> = (
@@ -91,6 +112,7 @@ export type SingleBlockConfigWithoutVariants<
 > = {
   dataRouter?: DataRouter<TProps, TBlockData, TComponent>;
   component?: TComponent;
+  meta?: Record<string, any>;
 
   // Set the following to `never` as hacky way of ensuring they can't be used alongside above properties:
   variantsRouter?: never;
@@ -106,14 +128,15 @@ export type SingleBlockConfigWithVariants<
   TProps = EmptyObjectOrRecord,
   TBlockData extends Record<string, any> = Record<string, any>
 > = {
-  variantsRouter: VariantsRouter<TBlockData>; // Replace unknown with the actual return type
+  variantsRouter: VariantsRouter<TBlockData>;
   variants: {
     [key: string]: SingleBlockConfigWithoutVariants<
       TComponent,
       TProps,
       TBlockData
-    >; // Replace {} with the actual type for your variations
+    >;
   };
+  meta?: Record<string, any>;
 
   // Set the following to `never` as hacky way of ensuring they can't be used alongside variants:
   dataRouter?: never;
@@ -142,6 +165,7 @@ export type BlockDataWithExtraContext<
   TBlockData extends Record<string, any> = Record<string, any>
 > = Partial<TBlockData> & {
   context?: BlockContext<Partial<TBlockData>>;
+  meta?: Record<string, any>;
 };
 
 export type BlockContext<
@@ -168,3 +192,15 @@ export type ProviderConfig<
   condition: (args: { blocks: TBlockData[] }) => boolean;
   component: TComponent;
 };
+
+export type BlockRendererPlugin<
+  TComponent extends (props: any) => any = (props: any) => any,
+  TRenderOutput = any,
+  TBlockData extends Record<string, any> = Record<string, any>
+> = (
+  config: BlockRendererConfig<TComponent, TRenderOutput, TBlockData>,
+  context: {
+    executionCount: number;
+    processedBlocks: Set<string>; // Track which block IDs have been processed
+  }
+) => BlockRendererConfig<TComponent, TRenderOutput, TBlockData>;
